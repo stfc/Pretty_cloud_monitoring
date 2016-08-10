@@ -148,9 +148,8 @@ for (var i = 0; i < total_clouds; i++)
     background_clouds.anchor.set(0.5);
 
     // set a random scale for the dude - no point them all being the same size!
-    background_clouds.scale.set(Json_Load*0.0015);
+    background_clouds.scale.set(Json_VM[i].load*0.003);
 
-	
     // finally lets set the dude to be at a random position..
     background_clouds.position.x = Math.random() * renderer.width;
     background_clouds.y = Math.random() * renderer.height;
@@ -185,7 +184,7 @@ function spawnCloud(){
     background_clouds.anchor.set(0.5);
 
     // set a random scale for the dude - no point them all being the same size!
-    background_clouds.scale.set(Math.random()*Json_Load*0.003);
+    background_clouds.scale.set(Json_VM[0].load*0.003);
 
 	
     // finally lets set the dude to be at a random position..
@@ -300,7 +299,7 @@ console.log(cloud1.width)
             //background_clouds.position.x -= dudeBounds.width;
 			background_clouds.removeChild()
 			background_array.splice(i,1);
-			//spawnCloud();
+			spawnCloud();
 			
         }
 
