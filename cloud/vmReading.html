@@ -35,18 +35,8 @@ var Star=PIXI.Texture.fromImage('star_pixel.png')
 var secret1=PIXI.Texture.fromImage('standing_mario.png')
 var secret2=PIXI.Texture.fromImage('mario_running_2.png')
 var secret3=PIXI.Texture.fromImage('mario_running_1.png')
-var coin=PIXI.Texture.fromImage('coin.png')
-//Font style for when we can't connect to JSON 
-var style={
-	font: 'bold italic 36px Arial',
-	fill:'#ffff1a',
-	stroke:'#4a1850',
-	dropShadow: true,
-	dropShadowColour: '#000000',
-	dropShadowAngle: 0.5,
-	wordWrap: true,
-	wordWrapWidth:300
-};
+//checking window size (won't need this in the end)
+console.log(window.innerWidth)
 //movie clip arrays
 var cloud_array=[cloud1,cloud2];
 var thunder_array=[thunder1,thunder2];
@@ -93,7 +83,7 @@ secret_clip.on('click', function ()
 {
     mario = !mario;
 
-    /*if(mario)
+    if(mario)
     {
         renderer.backgroundColor = 0x003061
 		//background_clouds =  PIXI.Texture= Star
@@ -102,7 +92,7 @@ secret_clip.on('click', function ()
     {
         renderer.backgroundColor= 0x1099bb
 		//background_clouds =  PIXI.texture=cloud1
-    }*/
+    }
 });
 
 
@@ -112,10 +102,6 @@ cloud_clip.scale.y=1
 cloud_clip.position.x= window.innerWidth / 2 - 1024/2
 
 function update_status(status){
-var status_display=new PIXI.Text('Status: ' + status, style)
-status_display.y=50
-stage.addChild(status_display)
-setTimeout(Remove_status,5000)
 if(status=='down')
     {
         cloud_clip.textures=thunder_array;
@@ -128,65 +114,13 @@ if(status=='down')
     {
         cloud_clip.textures=cloud_array;
     }
-//delete the current status dsiplay
-function Remove_status(){
-stage.removeChild(status_display)
-}
+
 }
 function update_load(load){
-var load_display = new PIXI.Text('Load: ' + load ,style);
-var total_clouds = load
-//time check
-var hour;
-hour= new Date();
-var clock=hour.getHours();
+var total_clouds = 5
 //stage.removeChild(background_clouds)
 console.log(load)
-  if( clock >= 17 || clock <6)
-    {
-        renderer.backgroundColor = 0x003061
-		//background_clouds =  PIXI.Texture= Star
-for (var i = 0; i < load; i++)
-{
-    // create a new Sprite that uses the image name that we just generated as its source
-    var background_clouds =  PIXI.Sprite.fromImage('star_pixel.png');
-
-    // set the anchor point so the texture is centerd on the sprite
-    background_clouds.anchor.set(0.5);
-
-    // set a random scale for the dude - no point them all being the same size!
-    background_clouds.scale.set(0.1);
-
-	
-    // finally lets set the dude to be at a random position..
-    background_clouds.position.x = Math.random() * renderer.width - renderer.width;
-    background_clouds.y = Math.random() * renderer.height;
-
-    background_clouds.tint = Math.random() * 0xFFFFFF;
-
-    // create some extra properties that will control movement :
-    // create a random direction in radians. This is a number between 0 and PI*2 which is the equivalent of 0 - 360 degrees
-    background_clouds.direction = 1.5708
-
-    // this number will be used to modify the direction of the dude over time
-    //background_clouds.turningSpeed = Math.random() * 0;
-
-    // create a random speed for the dude between 0 - 2
-    background_clouds.speed = window.innerWidth*0.002 + Math.random() * 1;
-
-    // finally we push the dude into the aliens array so it it can be easily accessed later
-    background_array.push(background_clouds);
-
-    stage.addChild(background_clouds);
-	stage.addChild(load_display)
-	setTimeout(Remove_load,5000)
-}	
-}
-   else
-    {
-        renderer.backgroundColor= 0x1099bb
-		//background_clouds =  PIXI.texture=cloud1
-		for (var i = 0; i < load; i++)
+for (var i = 0; i < total_clouds; i++)
 {
     // create a new Sprite that uses the image name that we just generated as its source
     var background_clouds =  PIXI.Sprite.fromImage('cloud_pixel.png');
@@ -218,15 +152,10 @@ for (var i = 0; i < load; i++)
     background_array.push(background_clouds);
 
     stage.addChild(background_clouds);
-	stage.addChild(load_display)
-	setTimeout(Remove_load,5000)
 	
-	}
+	
 }
-//delete the current load display
-function Remove_load(){
-stage.removeChild(load_display)
-}
+
 //adds cloud to screen
 stage.addChild(cloud_clip);
 }
@@ -234,21 +163,11 @@ stage.addChild(cloud_clip);
 var timer=setInterval(Fetch_status,5000);
 function Fetch_status(){
 var cloud_status=$.getJSON( "http://vm223.nubes.stfc.ac.uk/status", function( data ) {
-cloud_status.fail(function(data)
-{
-var Err_msg= new PIXI.Text('Can not reach the Server!',style)
-richText.x = 30;
-richText.y = 180;
-stage.addChild(Err_msg);
-console.log( "error" );
-})
-cloud_status.done(function(data)
-{
 console.log(data.status)
 update_status(data.status)
 update_load(data.load)
 //console.log(data.load)
-})
+
 });
 }
 // holder to store the clouds
@@ -297,30 +216,6 @@ stage.addChild(cloud_clip);
 
 });
 }*/
-//dummy status
-var Dummy_timer=setInterval(Dummy_status,5000);
-function Dummy_status()
-{
-decider= Math.random();
-if (decider>0.5)
-{
-var Virtual_up= new PIXI.Text('Virtual Machine: Up',style);
-Virtual_up.y=100
-stage.addChild(Virtual_up)
-setTimeout(Remove_VM,5000)
-}
-else
-{
-var Virtual_down= new PIXI.Text('Virtual Machine: Down',style);
-Virtual_down.y=100
-stage.addChild(Virtual_down)
-setTimeout(Remove_VM,5000)
-}
-function Remove_VM(){
-stage.removeChild(Virtual_up)
-stage.removeChild(Virtual_down)
-}
-}
 // create a bounding box for the clouds
 var CloudBoundsPadding = 100;
 var CloudBounds = new PIXI.Rectangle(-CloudBoundsPadding,
@@ -339,6 +234,7 @@ console.log(cloud1.width)
 	cloud_clip.position.y = Math.sin((0.5) + bob_count) * 50 + window.innerHeight / 4.5;
 	//console.log(cloud_clip.playing)
 	 // iterate through the dudes and update their position
+	if (update_load()<background_array.length){
     for (var i = 0; i < background_array.length; i++)
     {
         var background_clouds = background_array[i];
@@ -368,6 +264,7 @@ console.log(cloud1.width)
             background_clouds.position.y -= dudeBounds.height;
         }*/
     }
+	}
 
     // increment the ticker
     //tick += 0.1;
