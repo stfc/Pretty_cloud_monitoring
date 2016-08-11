@@ -260,11 +260,11 @@ if( clock >= 17 || clock <6){
     background_clouds.position.x = 0
     background_clouds.y = Math.random() * renderer.height;
 
-    background_clouds.tint = Math.random() * 0xFFFFFF;
+    //background_clouds.tint = Math.random() * 0xFFFFFF;
 
     // create some extra properties that will control movement :
     // create a random direction in radians. This is a number between 0 and PI*2 which is the equivalent of 0 - 360 degrees
-    background_clouds.direction = 1.5708
+    background_clouds.direction = Math.PI/2
 
     // this number will be used to modify the direction of the dude over time
     //background_clouds.turningSpeed = Math.random() * 0;
@@ -280,6 +280,15 @@ if( clock >= 17 || clock <6){
     stage.addChild(background_clouds);
 	//adds cloud to screen
 	stage.addChild(cloud_clip);
+	}
+	if (Json_VM[VM_ticker].status=='down'){
+	background_clouds.tint= 0x660066;
+	}
+	else if (Json_VM[VM_ticker].status=='degraded'){
+	background_clouds.tint= 0x0000ff;
+	}
+	else{
+	background_clouds.tint= 0xffff00;
 	}
 }
 
@@ -335,13 +344,7 @@ console.log(cloud1.width)
 	{
 	VM_ticker=0
 	}
-	/*else
-	{
-	background_clouds.removeChild()
-	background_array.splice(i,1);
-	}*/
-    // increment the ticker
-    //tick += 0.1;
+	
 	
     renderer.render(stage);
 	// request another animation frame...
