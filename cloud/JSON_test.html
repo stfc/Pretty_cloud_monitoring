@@ -1,0 +1,26 @@
+<html>
+<head>
+	<title>pretty cloud monotoring</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background-color: #ffffff;
+		}
+	</style>
+	<script src="pixi.js"></script> 
+	<script src="jquery-3.1.0.min.js"></script> 
+</head>
+<body>
+	<script>
+	var cloud_status=$.getJSON( "http://vm223.nubes.stfc.ac.uk/status", function( data ) {
+  //return data.status
+  console.log(data.status)
+});
+	
+		 
+	
+		</script>
+ 
+	</body>
+</html>

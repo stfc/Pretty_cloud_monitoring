@@ -1,0 +1,153 @@
+<html>
+<head>
+	<title>pretty cloud monotoring</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background-color: #000000;
+		}
+	</style>
+	<script src="pixi.js"></script> 
+</head>
+<body>
+	<script>
+//renders a screen for sprites to be placed on 
+var renderer = PIXI.autoDetectRenderer(1000, 720,{backgroundColor : 0x1099bb});
+document.body.appendChild(renderer.view);
+// create the root of the scene graph
+//var stage = new PIXI.Container();
+var cloud_alt=false;
+var thunder=false;
+// create a texture from an image path
+var texture = PIXI.Texture.fromImage('cloud_pixel.png');
+var secondTexture= PIXI.Texture.fromImage('cloud_pixel_alt.png') 
+var thirdTexture=PIXI.Texture.fromImage('speech_bubble_fine.png')
+var fourthTexture=PIXI.Texture.fromImage('thunder_pixel_alt.png')
+var fithTexture=PIXI.Texture.fromImage('thunder_pixel.png')
+var sixthTexture=PIXI.Texture.fromImage('speech_bubble_down.png')
+// create a new Sprite using the texture
+var cloud = new PIXI.Sprite(texture);
+var happy_cloud=new PIXI.Sprite(secondTexture);
+var bubble= new PIXI.Sprite(thirdTexture);
+var bad_bubble=new PIXI.Sprite(sixthTexture);
+var lightning=new PIXI.Sprite(fithTexture);
+var thunder = new PIXI.Sprite(fourthTexture);
+// move the sprites to the certain position of the screen
+
+//sub container
+var cloud_container= new PIXI.Container();
+var thunder_container=new PIXI.DisplayObjectContainer();
+var normal_cloud_container=new PIXI.DisplayObjectContainer();
+
+cloud.position.x = 0;
+cloud.position.y = 50;
+
+cloud.scale.x=0.5
+cloud.scale.y=0.5
+
+bubble.position.x=200
+bubble.position.y=-50
+
+bubble.scale.x=0.5
+bubble.scale.y=0.5
+
+thunder.scale.x=0.5
+thunder.scale.y=0.5
+
+bad_bubble.position.x=200
+bad_bubble.position.y=-50
+
+bad_bubble.scale.x=0.5
+bad_bubble.scale.y=0.5
+
+lightning.position.x = -17;
+lightning.position.y = 98;
+
+lightning.scale.x=0.5
+lightning.scale.y=0.5
+
+thunder.position.x = 0;
+thunder.position.y = 50;
+
+thunder.scale.x=0.5
+thunder.scale.y=0.5
+
+//adds cloud to screen
+cloud_container.addChild(cloud);
+
+
+//sets timer to switch between sprite
+var timer=setInterval(myTimer,1500);
+function myTimer(){
+	
+	cloud_alt= !cloud_alt
+	if(cloud_alt)
+	{
+		cloud_container.addChild(cloud_alt);
+		cloud_container.addChild(bubble); //adds speech bubble to screen 
+		cloud_container.removeChild(cloud);
+	}
+	else
+	{
+		cloud_container.addChild(cloud);
+		cloud_container.removeChild(bubble); //removes speech bubble form screen
+		cloud_container.removeChild(happy_cloud_cloud);
+	}
+
+}
+//changing scene
+function clear_stage(){
+
+}
+
+cloud.interactive = true
+cloud.on('click',function()
+{
+	thunder =! thunder;
+	if(thunder)
+	{
+		cloud_container.visible=false;
+		clearInterval(timer);
+		setInterval(myTimer2,1500)
+	}
+	else
+		
+	{
+		cloud_container.visible=true;
+		clearInterval(timer);
+		setInterval(myTimer,1500)
+	}
+});
+//function myTimer2(){
+	
+	cloud_alt= !cloud_alt
+	if(cloud_alt)
+	{
+		cloud_container.addChild(lightning);
+		cloud_container.addChild(bad_bubble); //adds speech bubble to screen 
+		cloud_container.removeChild(thunder);
+	}
+	else
+	{
+		cloud_container.removeChild(lightning);
+		cloud_container.addChild(thunder);
+		cloud_container.removeChild(bad_bubble); //removes speech bubble form screen
+	}
+
+
+// start animating
+animate();
+function animate() {
+    requestAnimationFrame(animate);
+
+    // just for fun, let's rotate mr rabbit a little
+    //bunny.rotation += 0.1;
+
+    // render the container
+    renderer.render(cloud_container);
+}
+	</script>
+ 
+	</body>
+</html>

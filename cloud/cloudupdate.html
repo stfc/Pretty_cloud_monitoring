@@ -1,0 +1,49 @@
+<html>
+<head>
+	<title>pretty cloud monotoring</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background-color: #000000;
+		}
+	</style>
+	<script src="pixi.js"></script> 
+	<script src="jquery-3.1.0.min.js"></script> 
+	<script src="ObjectPool.js"></script>
+</head>
+<body>
+	<script>
+var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight,{backgroundColor : 0x1099bb});
+document.body.appendChild(renderer.view);
+var stage = new PIXI.Container();
+
+	var this.pool = new CloudSpritesPool();
+	this.CloudSlices = [];
+	
+	Main.prototype.borrowCloudSprites = function(num) {
+  for (var i = 0; i < num; i++)
+  {
+    var sprite = this.pool.borrowCloud();
+    sprite.position.x = -32 + (i * 64);
+    sprite.position.y = 128;
+
+    this.wallSlices.push(sprite);
+
+    this.stage.addChild(sprite);
+  }
+};
+	Main.prototype.returnCloudSprites = function() {
+  for (var i = 0; i < this.CloudSlices.length; i++)
+  {
+    var sprite = this.CloudSlices[i];
+    this.stage.removeChild(sprite);
+    this.pool.returnWindow(sprite);
+  }
+
+  this.wallSlices = [];
+};
+	</script>
+ 
+	</body>
+</html>
