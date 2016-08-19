@@ -7,6 +7,7 @@
 			padding: 0;
 			background-color: #000000;
 		}
+	
 	</style>
 	<script src="pixi.js"></script> 
 	<script src="jquery-3.1.0.min.js"></script> 
@@ -41,8 +42,7 @@ var Star=PIXI.Texture.fromImage('star_pixel.png')
 var secret1=PIXI.Texture.fromImage('standing_mario.png')
 var secret2=PIXI.Texture.fromImage('mario_running_2.png')
 var secret3=PIXI.Texture.fromImage('mario_running_1.png')
-//checking window size (won't need this in the end)
-console.log(window.innerWidth)
+
 //movie clip arrays
 var cloud_array=[cloud1,cloud2];
 var thunder_array=[thunder1,thunder2];
@@ -58,7 +58,7 @@ secret_clip.play()
 //Creates Font style 
 var style={
 	font: 'bold italic 36px Arial',
-	fill:'#ffff1a',
+	fill:'#65FE08',
 	stroke:'#4a1850',
 	dropShadow: true,
 	dropShadowColour: '#000000',
@@ -67,21 +67,6 @@ var style={
 	wordWrapWidth:300
 };
 
-/*background_clouds.interactive=true;
-background_clouds.on('click',function()
-{
-background_cloud_check =! background_cloud_check;
-if(background_cloud_check)
-{
-var VM_load=new PIXI.Text('Load: ' + Json_VM[VM_ticker].load , style)
-VM_load.y=50
-stage.addChild(VM_load)
-}
-else
-{
-stage.removeChild(VM_load)
-}
-});*/
 
 var timer=setInterval(Fetch_status,10000);
 function Fetch_status(){
@@ -99,24 +84,19 @@ Json_VM=data.vms
 });
 }
 var clicker=0
-/*background_clouds.interactive = true;
-background_clouds.on('mousedown', onDown);
-background_clouds.on('touchstart', onDown);*/
 
 function onDown (eventData) {
 	clicker += 1;
-	
- 
   console.log(background_array.indexOf(eventData.target))
   console.log(name_array[background_array.indexOf(eventData.target)])
-//VM_load= new PIXI.Text('Load: ' + Json_VM[VM_ticker].load , style)
 if (clicker==1)
 {
 VM_Name= new PIXI.Text(name_array[background_array.indexOf(eventData.target)],style)
 VM_load= new PIXI.Text('Load: ' + Json_VM[background_array.indexOf(eventData.target)].load , style)
 VM_Status=new PIXI.Text('Status: ' + Json_VM[background_array.indexOf(eventData.target)].status , style)
-VM_load.y=50;
 VM_Status.y=100;
+VM_load.y=50;
+
 stage.addChild(VM_load);
 stage.addChild(VM_Name);
 stage.addChild(VM_Status);
@@ -135,7 +115,7 @@ clicker=0
 }
 }
 
-secret_clip.interactive = true;
+s/*ecret_clip.interactive = true;
 
 secret_clip.on('click', function ()
 {
@@ -151,7 +131,7 @@ secret_clip.on('click', function ()
         renderer.backgroundColor= 0x1099bb
 		//background_clouds =  PIXI.texture=cloud1
     }
-});
+});*/
 
 
 //size of the sprites
@@ -174,49 +154,6 @@ if(status=='down')
     }
 
 }
-/*update_load();
-function update_load(){
-var total_clouds = Json_VM.length
-//stage.removeChild(background_clouds)
-//console.log(load)
-for (var i = 0; i < total_clouds; i++)
-{
- // create a new Sprite that uses the image name that we just generated as its source
-    var background_clouds =  PIXI.Sprite.fromImage('cloud_pixel.png');
-	background_clouds.interactive = true;
-	background_clouds.on('mousedown', onDown);
-	background_clouds.on('touchstart', onDown);
-    // set the anchor point so the texture is centerd on the sprite
-    background_clouds.anchor.set(0.5);
-
-    // set a random scale for the dude - no point them all being the same size!
-    background_clouds.scale.set(Json_VM[VM_ticker].load*0.003);
-
-    // finally lets set the dude to be at a random position..
-    background_clouds.position.x = Math.random() * renderer.width;
-    background_clouds.y = Math.random() * renderer.height;
-
-    background_clouds.tint = Math.random() * 0xFFFFFF;
-
-    // create some extra properties that will control movement :
-    // create a random direction in radians. This is a number between 0 and PI*2 which is the equivalent of 0 - 360 degrees
-    background_clouds.direction = 1.5708
-
-    // this number will be used to modify the direction of the dude over time
-    //background_clouds.turningSpeed = Math.random() * 0;
-
-    // create a random speed for the dude between 0 - 2
-    background_clouds.speed = window.innerWidth*0.001 + Math.random() * 1;
-
-    // finally we push the dude into the aliens array so it it can be easily accessed later
-    background_array.push(background_clouds);
-
-    stage.addChild(background_clouds);
-	//adds cloud to screen
-	stage.addChild(cloud_clip);
-}
-}*/
-
 
 function spawnCloud(){
 var hour;
@@ -239,7 +176,7 @@ if( clock >= 17 || clock <6){
     // set the anchor point so the texture is centerd on the sprite
     background_clouds.anchor.set(0.5);
 
-    // set a random scale for the dude - no point them all being the same size!
+    // sets the cloud's size relitive to their load 
     background_clouds.scale.set(Json_VM[VM_ticker].load*0.003);
 
 	
@@ -250,13 +187,10 @@ if( clock >= 17 || clock <6){
     background_clouds.tint = Math.random() * 0xFFFFFF;
 
     // create some extra properties that will control movement :
-    // create a random direction in radians. This is a number between 0 and PI*2 which is the equivalent of 0 - 360 degrees
+	//cloud traveling at 90 degrees horitzonally across the screen
     background_clouds.direction = Math.PI/2
 
-    // this number will be used to modify the direction of the dude over time
-    //background_clouds.turningSpeed = Math.random() * 0;
-
-    // create a random speed for the dude between 0 - 2
+    // create a random speed for the clouds
     background_clouds.speed = window.innerWidth*0.0005 + Math.random() * 1;
 	
 	if (Json_VM[VM_ticker].status=='down'){
@@ -268,13 +202,12 @@ if( clock >= 17 || clock <6){
 	else{
 	background_clouds.tint= 0xffff00;
 	}
-	
-    // finally we push the dude into the aliens array so it it can be easily accessed later
+    // finally we push the clouds into the background cloud array so it it can be easily accessed later
     background_array.push(background_clouds);
 	name_array.push(Json_VM[VM_ticker].name);
 	VM_ticker +=1 	
 	
-    stage.addChild(background_clouds);
+    stage.addChildAt(background_clouds,0);
 	//adds cloud to screen
 	stage.addChild(cloud_clip);
 }
@@ -286,15 +219,13 @@ var CloudBounds = new PIXI.Rectangle(-CloudBoundsPadding,
                                     renderer.width + CloudBoundsPadding * 2,
                                     renderer.height + CloudBoundsPadding * 2);
 
-//var tick = 0;
-//helllo
+
 requestAnimationFrame(animate);
 Fetch_status();
 animate();
 function animate() {
 	bob_count += 0.05;
 	cloud_clip.position.y = Math.sin((0.5) + bob_count) * 50 + window.innerHeight / 4.5;
-	//console.log(cloud_clip.playing)
 	 // iterate through the dudes and update their position
     for (var i = 0; i < background_array.length; i++)
     {
@@ -307,9 +238,7 @@ function animate() {
         // wrap the dudes by testing their bounds...
         if (background_clouds.position.x < CloudBounds.x)
         {
-            //background_clouds.position.x += dudeBounds.width;
 			background_clouds.removeChild()
-			//i=0
 			
         }
         else if (background_clouds.position.x > CloudBounds.x + CloudBounds.width)
@@ -338,6 +267,7 @@ function animate() {
     requestAnimationFrame(animate);
 	
 }
+
 	</script>
  
 	</body>
