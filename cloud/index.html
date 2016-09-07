@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>pretty cloud monotoring</title>
+	<title>Pretty Cloud Monitoring</title>
 	<style>
 	body {
 		margin: 0;
@@ -16,6 +16,10 @@
 <body>
 	<script>
 
+	//User definable things
+	var maxClouds = 10;
+	var backgroundClouds = "true"; //yes it's a string, deal with it
+
 	function getParameterByName(name, url) {
 		if (!url) url = window.location.href;
 		name = name.replace(/[\[\]]/g, "\\$&");
@@ -24,9 +28,16 @@
 		if (!results) return null;
 		if (!results[2]) return '';
 		return decodeURIComponent(results[2].replace(/\+/g, " "));
-	};
+	}
+	
+	
+	if ( getParameterByName( "bg" ) ) {
+		backgroundClouds = getParameterByName( "bg" );
+	} 
 
-	var backgroundClouds = getParameterByName( "bg" );
+	if ( getParameterByName( "max" ) ) {
+		maxClouds = getParameterByName( "max" );
+	}
 
 	//renders a screen for sprites to be placed on
 	var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight,{backgroundColor : 0x1099bb});
@@ -68,19 +79,26 @@
 	var secret_clip=new PIXI.extras.MovieClip(secret_array);
 	cloud_clip.animationSpeed=0.005;
 	cloud_clip.play();
+	cloud_clip.scale.x=1;
+	cloud_clip.scale.y=1;
+	cloud_clip.position.x= window.innerWidth / 2 - 1024/2;
 	secret_clip.animationSpeed=0.2;
 	secret_clip.play();
 	//Creates Font style
 	var style={
-		font: 'bold italic 36px Arial',
-		fill:'#65FE08',
+		font: 'bold 36px Arial',
+		fill:'#111',
 		stroke:'#4a1850',
-		dropShadow: true,
+		dropShadow: false,
 		dropShadowColour: '#000000',
 		dropShadowAngle: 0.5,
 		wordWrap: true,
 		wordWrapWidth:300
 	};
+
+	//add vm info box
+	var vmInfo= new PIXI.Text("",style);
+	stage.addChild(vmInfo);
 
 
 	var timer=setInterval(Fetch_status,10000);
@@ -96,65 +114,29 @@
 
 		});
 	}
-	var clicker=0;
 
+
+	//handle clicking on background clouds
 	function onDown (eventData) {
-		clicker += 1;
-		console.log(background_array.indexOf(eventData.target));
-		console.log(name_array[background_array.indexOf(eventData.target)]);
-		if (clicker==1)
-		{
-			VM_Name= new PIXI.Text(name_array[background_array.indexOf(eventData.target)],style);
-			VM_load= new PIXI.Text('Memory: ' + Json_VM[background_array.indexOf(eventData.target)].alloc_mem + ' GB' , style);
-			VM_Status=new PIXI.Text('CPUs: ' + Json_VM[background_array.indexOf(eventData.target)].alloc_cpu , style);
-			VM_util=new PIXI.Text('Usage: ' + Json_VM[background_array.indexOf(eventData.target)].util + '%' , style);
-			VM_Status.y=100;
-			VM_load.y=50;
-			VM_util.y=150;
 
-			stage.addChild(VM_load);
-			stage.addChild(VM_Name);
-			stage.addChild(VM_Status);
-			stage.addChild(VM_util);
-		}
-		else if(clicker>1)
-		{
-			stage.removeChild(VM_load);
-			stage.removeChild(VM_Name);
-			stage.removeChild(VM_Status);
-			stage.removeChild(VM_util);
-			clicker=0;
-		}
-		else
-		{
-			stage.removeChild(VM_load);
-			clicker=0;
+		//get vm object from cloud object
+		var vm = name_array[background_array.indexOf(eventData.target)];
+
+		//create info string
+		var info = vm.name + "\nutil: " 
+			+ vm.util + "%\ncpus: " 
+			+ vm.alloc_cpu + "\nmem: " 
+			+ vm.alloc_mem + "GB";
+
+		//if the cloud has already been clicked, remove the info box
+		if (info == vmInfo.text){
+			vmInfo.text = "";
+		} else {
+			//else update
+			vmInfo.text = info;
 		}
 	}
 
-	/*ecret_clip.interactive = true;
-
-	secret_clip.on('click', function ()
-	{
-	mario = !mario;
-
-	if(mario)
-	{
-	renderer.backgroundColor = 0x003061
-	//background_clouds =  PIXI.Texture= Star
-}
-else
-{
-renderer.backgroundColor= 0x1099bb
-//background_clouds =  PIXI.texture=cloud1
-}
-});*/
-
-
-//size of the sprites
-cloud_clip.scale.x=1;
-cloud_clip.scale.y=1;
-cloud_clip.position.x= window.innerWidth / 2 - 1024/2;
 
 function update_status(status){
 	if(status=='down')
@@ -172,10 +154,10 @@ function update_status(status){
 
 }
 
-function spawnCloud(){
+function spawnCloud( randomX ){
 	var hour = new Date();
 	var clock = hour.getHours();
-	if ( clock >= 17 || clock < 6) {
+	if ( clock >= 19 || clock < 6) {
 		renderer.backgroundColor = 0x003061;
 		// create a new Sprite that uses the image name that we just generated as its source
 		var background_clouds =  PIXI.Sprite.fromImage('sprites/star_pixel.png');
@@ -193,15 +175,24 @@ function spawnCloud(){
 	background_clouds.anchor.set(0.5);
 
 	// sets the cloud's size relitive to their load
-	background_clouds.scale.set(math.sqrt(math.sqrt(Json_VM[VM_ticker].alloc_mem *Json_VM[VM_ticker].alloc_cpu))*0.05);
+	background_clouds.scale.set(math.sqrt(math.sqrt(Json_VM[VM_ticker].alloc_mem *Json_VM[VM_ticker].alloc_cpu))*0.10);
+	//background_clouds.scale.set(math.sqrt(math.sqrt(32 *8))*0.10);
 
 
 	// finally lets set the dude to be at a random position..
-	background_clouds.position.x = 0;
+
+	//MAKE THIS BE THE EDGE:
+
+	if (randomX){
+		background_clouds.position.x = Math.random() * renderer.width;
+	} else {
+		background_clouds.position.x = background_clouds.width / -2 ;
+	}
+
 	background_clouds.y = Math.random() * renderer.height;
 
 	//greyscale seting
-	var value=Json_VM[VM_ticker].util/100 *0xFF | 0;
+	var value= (100 - Json_VM[VM_ticker].util) /100 *0xFF | 0x0;
 	var grayscale = (value << 16) | (value << 8) | value;
 	var colour= '0x'+grayscale.toString(16);
 	background_clouds.tint = colour;
@@ -215,29 +206,36 @@ function spawnCloud(){
 
 	// finally we push the clouds into the background cloud array so it it can be easily accessed later
 	background_array.push(background_clouds);
-	name_array.push(Json_VM[VM_ticker].name);
+	name_array.push(Json_VM[VM_ticker]);
 	VM_ticker +=1
 
 	//adds cloud to screen
 	stage.addChildAt(background_clouds,0);
 }
 
-// create a bounding box for the clouds
-var CloudBoundsPadding = 100;
-var CloudBounds = new PIXI.Rectangle(-CloudBoundsPadding,
-	-CloudBoundsPadding,
-	renderer.width + CloudBoundsPadding * 2,
-	renderer.height + CloudBoundsPadding * 2);
-
+//spawn random(?) clouds on the screen to start with
+function spawnInitClouds(){
+	if (backgroundClouds == "true"){
+		if (!Json_Status){
+			setTimeout(spawnInitClouds,100);
+		} else {
+			for (var i = 0; i < maxClouds; i++){
+				spawnCloud(true);
+			}
+		}
+	}
+}
 
 	requestAnimationFrame(animate);
 	Fetch_status();
+	spawnInitClouds();
+
 
 	animate();
 	function animate() {
-		bob_count += 0.05;
+		bob_count += 0.03;
 		cloud_clip.position.y = Math.sin((0.5) + bob_count) * 50 + window.innerHeight / 4.5;
-		//check if the user has requested no bg clouds
+		//check if the user has requested no background clouds
 		if ( backgroundClouds != "false" ){
 			// iterate through the clouds and update their position
 			for (var i = 0; i < background_array.length; i++)
@@ -245,17 +243,18 @@ var CloudBounds = new PIXI.Rectangle(-CloudBoundsPadding,
 				var background_clouds = background_array[i];
 				background_clouds.position.x += Math.sin(background_clouds.direction) * background_clouds.speed;
 				background_clouds.position.y += Math.cos(background_clouds.direction) * background_clouds.speed;
-				if (background_clouds.position.x > CloudBounds.x + CloudBounds.width)
+				//if (background_clouds.position.x > CloudBounds.x + CloudBounds.width)
+				if (background_clouds.position.x > renderer.width + background_clouds.width / 2 )
 				{
-					//background_clouds.position.x -= dudeBounds.width;
 					background_clouds.removeChild()
 					background_array.splice(i,1);
 					name_array.splice(i,1);
 				}
 			}
-			if (background_array.length<= Json_Load)
+			//if (background_array.length<= Json_Load/10)
+			if (background_array.length <= maxClouds && Json_Load )
 			{
-				spawnCloud();
+				spawnCloud(false);
 			}
 
 			if (VM_ticker>=Json_VM.length-1)
