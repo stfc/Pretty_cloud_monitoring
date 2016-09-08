@@ -86,21 +86,31 @@
 	secret_clip.animationSpeed=0.2;
 	secret_clip.play();
 	//Creates Font style
-	var style={
-		font: 'bold 24px monospace',
+	var vmInfoStyle={
+		
 		fill:'#111',
-		stroke:'#4a1850',
-		dropShadow: false,
-		dropShadowColour: '#000000',
-		dropShadowAngle: 0.5,
-		wordWrap: true,
-		wordWrapWidth:300
 	};
 
 	//add vm info box
-	var vmInfo= new PIXI.Text("",style);
+	var vmInfo= new PIXI.Text("", {font: 'bold 24px monospace', fill: '#111' });
 	vmInfo.x = 10;
 	vmInfo.y = 10;
+
+	//add error message box
+	var errorBox= new PIXI.Text("This is a test message do not panic please i am not sure what is going to happen when", 
+			{
+				font: 'bold 36px monospace', 
+				fill: '#111', 
+				stroke: 'white', 
+				strokeThickness:  3, 
+				align: 'center',
+				wordWrap: true,
+				wordWrapWidth: renderer.width * (0.9 / window.devicePixelRatio)
+			});
+	errorBox.x = renderer.width * 0.05;
+	errorBox.y = renderer.height * 0.85;
+	//errorBox.height= renderer.height * 0.2;
+	//errorBox.width = renderer.width * 0.9;
 
 	//add haze layer
 	var hazeLayer = new PIXI.Graphics();
@@ -118,6 +128,7 @@
 		//var cloud_status=$.getJSON( "hn/pretty-stats.json", function( data ) {
 		var cloud_status=$.getJSON( "pretty-stats.json", function( data ) {
 			update_status(data.status);
+			errorBox.text = data.message;
 			Json_Load=data.load;
 			Json_Status=data.status;
 			Json_VM=data.vms;
@@ -216,7 +227,7 @@ function spawnCloud( randomX ){
 	background_clouds.direction = Math.PI/2;
 
 	// create a random speed for the clouds
-	background_clouds.speed = window.innerWidth*0.0005 + Math.random() * 1;
+	background_clouds.speed = window.innerWidth*0.0005 + Math.random() * 0.7;
 
 	// finally we push the clouds into the background cloud array so it it can be easily accessed later
 	background_array.push(background_clouds);
@@ -281,6 +292,7 @@ function spawnInitClouds(){
 		stage.addChild(hazeLayer);
 		stage.addChild(vmInfo);
 		stage.addChild(cloud_clip);
+		stage.addChild(errorBox);
 		renderer.render(stage);
 		// request another animation frame...
 		requestAnimationFrame(animate);
