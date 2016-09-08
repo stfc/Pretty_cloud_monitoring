@@ -17,7 +17,8 @@
 	<script>
 
 	//User definable things
-	var maxClouds = 10;
+	var maxUtil = 250; //max value the VM utilisation is going to be, affects the colours
+	var maxClouds = 10; //number of background clouds on screen at any time
 	var backgroundClouds = "true"; //yes it's a string, deal with it
 
 	function getParameterByName(name, url) {
@@ -86,7 +87,7 @@
 	secret_clip.play();
 	//Creates Font style
 	var style={
-		font: 'bold 36px Arial',
+		font: 'bold 24px monospace',
 		fill:'#111',
 		stroke:'#4a1850',
 		dropShadow: false,
@@ -98,7 +99,18 @@
 
 	//add vm info box
 	var vmInfo= new PIXI.Text("",style);
-	stage.addChild(vmInfo);
+	vmInfo.x = 10;
+	vmInfo.y = 10;
+
+	//add haze layer
+	var hazeLayer = new PIXI.Graphics();
+
+	hazeLayer.beginFill(0xBBBBBB);
+
+	hazeLayer.alpha = 0.5;
+
+	hazeLayer.drawRect(0, 0, renderer.width, renderer.height);
+
 
 
 	var timer=setInterval(Fetch_status,10000);
@@ -123,9 +135,9 @@
 		var vm = name_array[background_array.indexOf(eventData.target)];
 
 		//create info string
-		var info = vm.name + "\nutil: " 
-			+ vm.util + "%\ncpus: " 
-			+ vm.alloc_cpu + "\nmem: " 
+		var info = "VM Name: " + vm.name + "\nUtilisation: " 
+			+ vm.util + "%\nAllocated CPUs: " 
+			+ vm.alloc_cpu + "\nAllocated Mem: " 
 			+ vm.alloc_mem + "GB";
 
 		//if the cloud has already been clicked, remove the info box
@@ -179,9 +191,7 @@ function spawnCloud( randomX ){
 	//background_clouds.scale.set(math.sqrt(math.sqrt(32 *8))*0.10);
 
 
-	// finally lets set the dude to be at a random position..
 
-	//MAKE THIS BE THE EDGE:
 
 	if (randomX){
 		background_clouds.position.x = Math.random() * renderer.width;
@@ -191,13 +201,17 @@ function spawnCloud( randomX ){
 
 	background_clouds.y = Math.random() * renderer.height;
 
-	//greyscale seting
-	var value= (100 - Json_VM[VM_ticker].util) /100 *0xFF | 0x0;
+	//greyscale setting
+	var util = Json_VM[VM_ticker].util;
+	if (util > maxUtil){
+		util = maxUtil;
+	}
+	var value= (maxUtil - util) /maxUtil *0xFF | 0x15;
 	var grayscale = (value << 16) | (value << 8) | value;
 	var colour= '0x'+grayscale.toString(16);
 	background_clouds.tint = colour;
+	//background_clouds.alpha = 0.5;
 
-	// create some extra properties that will control movement :
 	//cloud traveling at 90 degrees horitzonally across the screen
 	background_clouds.direction = Math.PI/2;
 
@@ -264,6 +278,8 @@ function spawnInitClouds(){
 		}
 
 		
+		stage.addChild(hazeLayer);
+		stage.addChild(vmInfo);
 		stage.addChild(cloud_clip);
 		renderer.render(stage);
 		// request another animation frame...
