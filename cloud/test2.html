@@ -1,0 +1,108 @@
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      margin:0;
+      padding:0;
+      background-color: 65AABB;
+      height: 0;
+      user-select: none;
+    }
+    #main_cloud {
+      position: relative;
+      left: 50%;
+      height: 47vh;
+      animation-name: bop;
+      animation-duration: 1.5s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+      animation-timing-function: ease-in-out;
+      pointer-events: none;
+
+      transition: width 1s;
+    }
+    #bg_cloud {
+      position: fixed;
+      height: 12vh;
+      z-index: -1;
+      left: -20%;
+      animation-name: glide;
+      animation-iteration-count: infinite;
+      animation-fill-mode: forwards;
+      animation-timing-function: linear;
+
+      transition-duration: 0.7s;
+      transition-property: transform;
+      transition-timing-function: ease-out;
+    }
+    #bg_cloud.clicked {
+      transform: translateX(15%);
+      animation-play-state: paused;
+    }
+    @keyframes bop {
+      0% {transform: translate(-50%,80%);}
+      100% {transform: translate(-50%,20%);}
+    }
+    @keyframes glide {
+      0% {left: -20%;}
+      100% {left: 120%;}
+    }
+  </style>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script>
+  //user defined variables
+  var max_clouds = 10;
+  function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+    results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+  if ( getParameterByName( "max" ) ) {
+    max_clouds = getParameterByName( "max" );
+  }
+
+  var bg_array = [];
+  function preload(){
+    for (i = 0; i < max_clouds; i++){
+      var img = document.createElement("img");
+      bg_array.push(img);
+
+      img.src = "sprites/new/bg_cloud.png";
+      img.id = "bg_cloud";
+
+      img.style["top"] = String(Math.floor(Math.random() * 88)) + "%";
+      img.style["animationDuration"] = String((Math.random()*8)+5) + "s";
+      img.style["animationDelay"] = String(-(Math.random()*10)) + "s"
+
+      img.onclick = function(){
+        $(this).toggleClass("clicked");
+      }
+
+      img.addEventListener("animationiteration", function(){
+        this.style["top"] = String(Math.floor(Math.random() * 88)) + "%";
+        //this.style["animationDuration"] = String((Math.random()*8)+5) + "s";
+      }, false);
+
+      document.getElementsByTagName('body')[0].appendChild(img);
+    }
+  }
+
+  function reset_cloud(i){
+    console.log(i)
+    bg_array[i].style["animationPlayState"] = "paused";
+    bg_array[i].style["animationPlayState"] = "running";
+  }
+  </script>
+</head>
+<body onload="preload()">
+  <img  id="main_cloud" src="sprites/new/main.gif">
+</body>
+
+<!--
+to do:
+git gud
+-->
