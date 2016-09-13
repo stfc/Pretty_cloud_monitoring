@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html>
 <head>
   <meta charset="utf-8">
   <style>
@@ -7,30 +9,31 @@
       background-color: 65AABB;
       height: 0;
       user-select: none;
+      -moz-user-select: none;
+      overflow: hidden;
+      cursor: default;
     }
     #main_cloud {
       position: relative;
       left: 50%;
+      top: 50%;
       height: 47vh;
       animation-name: bop;
-      animation-duration: 1.5s;
+      animation-duration: 2s;
       animation-iteration-count: infinite;
       animation-direction: alternate;
       animation-timing-function: ease-in-out;
       pointer-events: none;
-
-      transition: width 1s;
     }
     #bg_cloud {
       position: fixed;
-      height: 12vh;
+      height: 6vh;
       z-index: -1;
       left: -20%;
       animation-name: glide;
       animation-iteration-count: infinite;
       animation-fill-mode: forwards;
       animation-timing-function: linear;
-
       transition-duration: 0.7s;
       transition-property: transform;
       transition-timing-function: ease-out;
@@ -38,6 +41,21 @@
     #bg_cloud.clicked {
       transform: translateX(15%);
       animation-play-state: paused;
+      z-index: 1;
+    }
+    #motd {
+      margin: 0px;
+      top: 5%;
+      left: 5%;
+      position: absolute;
+      font-size: 5vh;
+      font-family: monospace;
+      font-weight: bold;
+      color: rgb(77, 77, 77);
+      text-shadow: 5px 0px 4px white,
+      0px 5px 4px white,
+      -5px 0px 4px white,
+      0px -5px 4px white;
     }
     @keyframes bop {
       0% {transform: translate(-50%,80%);}
@@ -48,10 +66,17 @@
       100% {left: 120%;}
     }
   </style>
+
   <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
   <script>
-  //user defined variables
+  var status;
+  var load;
+  var vms_array = [];
   var max_clouds = 10;
+  var bg_array = [];
+
+  //user defined variables
   function getParameterByName(name, url) {
     if (!url) url = window.location.href;
     name = name.replace(/[\[\]]/g, "\\$&");
@@ -65,43 +90,102 @@
     max_clouds = getParameterByName( "max" );
   }
 
-  var bg_array = [];
-  function preload(){
-    for (i = 0; i < max_clouds; i++){
-      var img = document.createElement("img");
-      bg_array.push(img);
-
-      img.src = "sprites/new/bg_cloud.png";
-      img.id = "bg_cloud";
-
-      img.style["top"] = String(Math.floor(Math.random() * 88)) + "%";
-      img.style["animationDuration"] = String((Math.random()*8)+5) + "s";
-      img.style["animationDelay"] = String(-(Math.random()*10)) + "s"
-
-      img.onclick = function(){
-        $(this).toggleClass("clicked");
+  setInterval(update_json,10000);
+  function update_json(){
+    $.getJSON("pretty-stats.json",function(data){
+      if(status !== data.status){
+        status = data.status;
+        if(data.status == "ok"){
+          $("#main_cloud").attr("src", "sprites/new/main.gif");
+        }
+        else if (data.status == "degraded") {
+          $("#main_cloud").attr("src", "sprites/new/degraded1.png");
+        }
+        else{
+          $("#main_cloud").attr("src", "sprites/new/down1.png");
+        }
       }
-
-      img.addEventListener("animationiteration", function(){
-        this.style["top"] = String(Math.floor(Math.random() * 88)) + "%";
-        //this.style["animationDuration"] = String((Math.random()*8)+5) + "s";
-      }, false);
-
-      document.getElementsByTagName('body')[0].appendChild(img);
-    }
+      load = data.load;
+      $("#motd").text(data.message);
+      vms_array = data.vms;
+    });
   }
 
-  function reset_cloud(i){
-    console.log(i)
-    bg_array[i].style["animationPlayState"] = "paused";
-    bg_array[i].style["animationPlayState"] = "running";
+  function preload(){
+    update_json();
+    if(!status){
+      setTimeout(preload,100)
+    }
+    else{
+      for (i = 0; i < max_clouds; i++){
+        var data_array = []
+        var img = document.createElement("img");
+        var sil = document.createElement("img");
+        var vm_bble = document.createElement("img");
+        var vm_info = vms_array[Math.floor(Math.random() * vms_array.length)];
+        console.log(vms_array.length)
+
+        data_array.push(img);
+        data_array.push(sil);
+        data_array.push(vm_info);
+        bg_array.push(data_array);
+
+        img.src = "sprites/new/bg_cloud.png";
+        img.id = "bg_cloud";
+        sil.src = "sprites/new/bg_cloud_sil.png";
+        sil.id = "bg_cloud";
+        //sil is for silhouette
+
+        //assign a random height coordinate, speed and starting position per bg cloud
+        var top = String(Math.floor(Math.random() * 88)) + "%";
+        var duration = String((Math.random()*15)+10) + "s";
+        var delay = String(-(Math.random()*20)) + "s";
+
+        img.style["top"] = top;
+        sil.style["top"] = top;
+        img.style["animationDuration"] = duration;
+        sil.style["animationDuration"] = duration;
+        img.style["animationDelay"] = delay;
+        sil.style["animationDelay"] = delay;
+        img.style["opacity"] = 1 - (vm_info.util / 270);
+
+        //change to clicked class and display vm info when clicked
+        img.onclick = function(){
+          for(i = 0; i < bg_array.length; i++){
+            if(bg_array[i][0] == this){
+              $(bg_array[i][0]).toggleClass("clicked");
+              $(bg_array[i][1]).toggleClass("clicked");
+              console.log(vms_array.length);
+            }
+          }
+        }
+
+        img.addEventListener("animationiteration", function(){
+          var new_top = String(Math.floor(Math.random() * 88)) + "%";
+          //var new_speed = String((Math.random()*15)+10) + "s";
+          for(i = 0; i < bg_array.length; i++){
+            if(bg_array[i][0] == this){
+              bg_array[i][0].style["top"] = new_top;
+              bg_array[i][1].style["top"] = new_top;
+              // bg_array[i][0].style["animationDuration"] = new_speed;
+              // bg_array[i][1].style["animationDuration"] = new_speed;
+            }
+          }
+        }, false);
+
+        $("body").append(sil);
+        $("body").append(img);
+      }
+    }
   }
   </script>
 </head>
-<body onload="preload()">
-  <img  id="main_cloud" src="sprites/new/main.gif">
-</body>
 
+<body onload="preload()">
+  <img  id="main_cloud">
+  <p id="motd" ></p>
+</body>
+</html>
 <!--
 to do:
 git gud
