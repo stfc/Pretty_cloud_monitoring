@@ -146,13 +146,13 @@
       if(status !== data.status){
         status = data.status;
         if(data.status == "ok"){
-          $("#main_cloud").attr("src", "sprites/new/main.gif");
+          $("#main_cloud").attr("src", "sprites/ok.gif");
         }
         else if (data.status == "degraded") {
-          $("#main_cloud").attr("src", "sprites/new/degraded1.png");
+          $("#main_cloud").attr("src", "sprites/degraded.gif");
         }
         else{
-          $("#main_cloud").attr("src", "sprites/new/down1.png");
+          $("#main_cloud").attr("src", "sprites/down.gif");
         }
       }
       load = data.load;
@@ -177,13 +177,13 @@
         data_dict.img = img;
 
         img.id = "bg_cloud";
-        img.src = "sprites/new/bg_cloud.png";
+        img.src = "sprites/bg_cloud.png";
 
-        var top = Math.floor(Math.random() * 88);
+        var size = format_size(vm_info);
+        var top = Math.floor(Math.random() * (100 - size));
         var cloud_top = String(top) + "%";
         var duration = String((Math.random()*15)+10) + "s";
         var delay = String(-(Math.random()*20)) + "s";
-        var size = format_size(vm_info);
 
         img.style.top = cloud_top;
         img.style.animationDuration = duration;
@@ -194,26 +194,31 @@
         img.addEventListener("animationiteration", function(){
           for(i = 0; i < bg_array.length; i++){
             if(bg_array[i].img == this){
-              var new_top = Math.floor(Math.random() * 88);
-              var new_cloud_top = String(new_top) + "%";
-              var new_bubbl_top = String(new_top - 20.5) + "%";
-
               bg_array[i].vm_info = vms_array[Math.floor(Math.random() * vms_array.length)];
               var new_size = format_size(bg_array[i].vm_info);
+              var new_top = Math.floor(Math.random() * (100 - new_size));
+              if(new_top < 25){
+                var new_bubbl_top = String(new_top + new_size + 1) + "%";
+                var new_text_top = String(new_top + new_size + 4.5) + "%"
+                bg_array[i].bbl.style["transform"] = "scaleY(-1)"
+              }
+              else{
+                var new_bubbl_top = String(new_top - 20.5) + "%";
+                var new_text_top = String(new_top - 20.5) + "%";
+                bg_array[i].bbl.style["transform"] = "scaleY(1)"
+              }
 
-              bg_array[i].img.style.top = new_cloud_top;
+              bg_array[i].img.style.top = String(new_top) + "%";
               bg_array[i].img.style.height = String(new_size) + "vh";
               bg_array[i].img.style.filter = "brightness(" + String(1 - (bg_array[i].vm_info.util / 270)) + ")";
               if(parseInt(bubbles_enabled)){
                 bg_array[i].bbl.style.top = new_bubbl_top;
-                bg_array[i].txt.style.top = new_bubbl_top;
+                bg_array[i].txt.style.top = new_text_top;
                 format_text(bg_array[i].txt, bg_array[i].vm_info);
               }
             }
           }
         }, false);
-
-
 
         if(parseInt(bubbles_enabled)){
           var bbl = document.createElement("img");
@@ -224,14 +229,22 @@
 
           bbl.id = "vm_bubble";
           txt.id = "vm_bubble";
-          bbl.src = "sprites/new/vm_bubble.png";
-          //$(txt).text(format_text(vm_info));
+          bbl.src = "sprites/bg_bubble.png";
           format_text(txt, vm_info);
 
-          var bubbl_top = String(top - 20.5) + "%";
+          if(top < 25){
+            var bubbl_top = String(top + size + 1) + "%";
+            var text_top = String(top + size + 4.5) + "%";
+            bbl.style.transform = "scaleY(-1)";
+          }
+          else{
+            var bubbl_top = String(top - 20.5) + "%";
+            var text_top = String(top - 20.5) + "%";
+            bbl.style.transform = "scaleY(1)";
+          }
 
           bbl.style.top = bubbl_top;
-          txt.style.top = bubbl_top;
+          txt.style.top = text_top;
           bbl.style.height = "20vh";
           bbl.style.animationDuration = duration;
           txt.style.animationDuration = duration;
@@ -242,14 +255,12 @@
             for(i = 0; i < bg_array.length; i++){
               if(bg_array[i].img == this){
                 $(bg_array[i].img).toggleClass("clicked");
-                if(parseInt(bubbles_enabled)){
-                  $(bg_array[i].bbl).toggleClass("clicked");
-                  $(bg_array[i].txt).toggleClass("clicked");
-                }
+                $(bg_array[i].bbl).toggleClass("clicked");
+                $(bg_array[i].txt).toggleClass("clicked");
               }
             }
           }
-          
+
           $("body").append(bbl);
           $("body").append(txt);
         }
@@ -268,6 +279,7 @@
 </html>
 <!--
 to do:
-filter:brightness(utilisation);
+bubble not clip through top
+finish gifs
 git gud
 -->

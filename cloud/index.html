@@ -1,307 +1,285 @@
+<!DOCTYPE html>
 <html>
 <head>
-	<title>Pretty Cloud Monitoring</title>
-	<style>
-	body {
-		margin: 0;
-		padding: 0;
-		background-color: #000000;
-	}
+  <meta charset="utf-8">
+  <style>
+    body {
+      margin:0;
+      padding:0;
+      background-color: rgb(101,170,187);
+      height: 0;
+      user-select: none;
+      -moz-user-select: none;
+      overflow: hidden;
+      cursor: default;
+      font-family: monospace;
+    }
+    #main_cloud {
+      position: relative;
+      left: 50%;
+      top: 50%;
+      height: 47vh;
+      animation-name: bop;
+      animation-duration: 2s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+      animation-timing-function: ease-in-out;
+      pointer-events: none;
+    }
+    #bg_cloud {
+      position: fixed;
+      z-index: -1;
+      left: -20%;
+      animation-name: glide;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      transition-property: transform;
+      transition-duration: 0.9s;
+      transition-timing-function: ease-out;
+    }
+    #bg_cloud.clicked {
+      transform: translateX(15%);
+      animation-play-state: paused;
+      z-index: 1;
+    }
+    #vm_bubble {
+      position: fixed;
+      z-index: -1;
+      left: -20%;
+      opacity: 0;
+      animation-name: glide;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      transition-property: opacity;
+      transition-duration: 0.7s;
+      transition-timing-function: ease-out;
+    }
+    #vm_bubble.clicked {
+      opacity: 1;
+      animation-play-state: paused;
+      z-index: 1;
+    }
+    p#vm_info {
+      padding-left: 2vh;
+      font-size: 1.6vh;
+    }
+    #motd {
+      margin: 0px;
+      top: 5%;
+      left: 5%;
+      position: absolute;
+      font-size: 5vh;
+      font-weight: bold;
+      color: rgb(77, 77, 77);
+      text-shadow: 5px 0px 4px white,
+      0px 5px 4px white,
+      -5px 0px 4px white,
+      0px -5px 4px white;
+    }
+    @keyframes bop {
+      0% {transform: translate(-50%,90%);}
+      100% {transform: translate(-50%,10%);}
+    }
+    @keyframes glide {
+      0% {left: -20%;}
+      100% {left: 120%;}
+    }
+  </style>
 
-	</style>
-	<script src="js/pixi.js"></script>
-	<script src="js/jquery-3.1.0.min.js"></script>
-	<script src="js/math.js" type="text/javascript"></script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+  <script>
+  //user defined variables
+  var max_clouds = 10;
+  var bubbles_enabled = 1;
+  function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+    results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+  if ( getParameterByName( "max" ) ) {
+    max_clouds = getParameterByName( "max" );
+  }
+  if ( getParameterByName( "bubbles" ) ) {
+    bubbles_enabled = getParameterByName( "bubbles" );
+  }
+
+  function format_size(info){
+    out = info.alloc_cpu * info.alloc_mem;
+    out = Math.sqrt(Math.sqrt(out));
+    out = out / 5;
+    out = out * 12;
+    out = out + 6;
+    return(Math.floor(out));
+  }
+  function format_text(div, info){
+    $(div).empty();
+    p_name = document.createElement("p");
+    p_util = document.createElement("p");
+    p_cpus = document.createElement("p");
+    p_mem = document.createElement("p");
+    p_name.id = "vm_info";
+    p_util.id = "vm_info";
+    p_cpus.id = "vm_info";
+    p_mem.id = "vm_info";
+    $(p_name).text("Name: " + info.name);
+    $(p_util).text("Util: " + String(Math.round(info.util*10000)/10000) + "%");
+    $(p_cpus).text("CPUs: " + info.alloc_cpu);
+    $(p_mem).text("Mem : " + info.alloc_mem + "GB");
+    $(div).append(p_name);
+    $(div).append(p_util);
+    $(div).append(p_cpus);
+    $(div).append(p_mem );
+
+  }
+
+  var status;
+  var load;
+  var vms_array = [];
+  setInterval(update_json,10000);
+  function update_json(){
+    $.getJSON("pretty-stats.json",function(data){
+      if(status !== data.status){
+        status = data.status;
+        if(data.status == "ok"){
+          $("#main_cloud").attr("src", "sprites/ok.gif");
+        }
+        else if (data.status == "degraded") {
+          $("#main_cloud").attr("src", "sprites/degraded.gif");
+        }
+        else{
+          $("#main_cloud").attr("src", "sprites/down.gif");
+        }
+      }
+      load = data.load;
+      $("#motd").text(data.message);
+      vms_array = data.vms;
+    });
+  }
+
+  var bg_array = [];
+  function preload(){
+    update_json();
+    if(!status){
+      setTimeout(preload,100)
+    }
+    else{
+      for (i = 0; i < max_clouds; i++){
+        var data_dict = {};
+        var vm_info = vms_array[Math.floor(Math.random() * vms_array.length)];
+        var img = document.createElement("img");
+
+        data_dict.vm_info = vm_info;
+        data_dict.img = img;
+
+        img.id = "bg_cloud";
+        img.src = "sprites/bg_cloud.png";
+
+        var size = format_size(vm_info);
+        var top = Math.floor(Math.random() * (100 - size));
+        var cloud_top = String(top) + "%";
+        var duration = String((Math.random()*15)+10) + "s";
+        var delay = String(-(Math.random()*20)) + "s";
+
+        img.style.top = cloud_top;
+        img.style.animationDuration = duration;
+        img.style.animationDelay = delay;
+        img.style.height = String(size) + "vh";
+        img.style.filter = "brightness(" + String(1 - (vm_info.util / 270)) + ")";
+
+        img.addEventListener("animationiteration", function(){
+          for(i = 0; i < bg_array.length; i++){
+            if(bg_array[i].img == this){
+              bg_array[i].vm_info = vms_array[Math.floor(Math.random() * vms_array.length)];
+              var new_size = format_size(bg_array[i].vm_info);
+              var new_top = Math.floor(Math.random() * (100 - new_size));
+              if(new_top < 25){
+                var new_bubbl_top = String(new_top + new_size + 1) + "%";
+                var new_text_top = String(new_top + new_size + 4.5) + "%"
+                bg_array[i].bbl.style["transform"] = "scaleY(-1)"
+              }
+              else{
+                var new_bubbl_top = String(new_top - 20.5) + "%";
+                var new_text_top = String(new_top - 20.5) + "%";
+                bg_array[i].bbl.style["transform"] = "scaleY(1)"
+              }
+
+              bg_array[i].img.style.top = String(new_top) + "%";
+              bg_array[i].img.style.height = String(new_size) + "vh";
+              bg_array[i].img.style.filter = "brightness(" + String(1 - (bg_array[i].vm_info.util / 270)) + ")";
+              if(parseInt(bubbles_enabled)){
+                bg_array[i].bbl.style.top = new_bubbl_top;
+                bg_array[i].txt.style.top = new_text_top;
+                format_text(bg_array[i].txt, bg_array[i].vm_info);
+              }
+            }
+          }
+        }, false);
+
+        if(parseInt(bubbles_enabled)){
+          var bbl = document.createElement("img");
+          var txt = document.createElement("div");
+
+          data_dict.bbl = bbl;
+          data_dict.txt = txt;
+
+          bbl.id = "vm_bubble";
+          txt.id = "vm_bubble";
+          bbl.src = "sprites/bg_bubble.png";
+          format_text(txt, vm_info);
+
+          if(top < 25){
+            var bubbl_top = String(top + size + 1) + "%";
+            var text_top = String(top + size + 4.5) + "%";
+            bbl.style.transform = "scaleY(-1)";
+          }
+          else{
+            var bubbl_top = String(top - 20.5) + "%";
+            var text_top = String(top - 20.5) + "%";
+            bbl.style.transform = "scaleY(1)";
+          }
+
+          bbl.style.top = bubbl_top;
+          txt.style.top = text_top;
+          bbl.style.height = "20vh";
+          bbl.style.animationDuration = duration;
+          txt.style.animationDuration = duration;
+          bbl.style.animationDelay = delay;
+          txt.style.animationDelay = delay;
+
+          img.onclick = function(){
+            for(i = 0; i < bg_array.length; i++){
+              if(bg_array[i].img == this){
+                $(bg_array[i].img).toggleClass("clicked");
+                $(bg_array[i].bbl).toggleClass("clicked");
+                $(bg_array[i].txt).toggleClass("clicked");
+              }
+            }
+          }
+
+          $("body").append(bbl);
+          $("body").append(txt);
+        }
+        $("body").append(img);
+        bg_array.push(data_dict);
+      }
+    }
+  }
+  </script>
 </head>
-<body>
-	<script>
 
-	//User definable things
-	var maxUtil = 250; //max value the VM utilisation is going to be, affects the colours
-	var maxClouds = 10; //number of background clouds on screen at any time
-	var backgroundClouds = "true"; //yes it's a string, deal with it
-
-	function getParameterByName(name, url) {
-		if (!url) url = window.location.href;
-		name = name.replace(/[\[\]]/g, "\\$&");
-		var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-		results = regex.exec(url);
-		if (!results) return null;
-		if (!results[2]) return '';
-		return decodeURIComponent(results[2].replace(/\+/g, " "));
-	}
-
-
-	if ( getParameterByName( "bg" ) ) {
-		backgroundClouds = getParameterByName( "bg" );
-	}
-
-	if ( getParameterByName( "max" ) ) {
-		maxClouds = getParameterByName( "max" );
-	}
-
-	//renders a screen for sprites to be placed on
-	var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight,{backgroundColor : 0x1099bb});
-	document.body.appendChild(renderer.view);
-	// create the root of the scene graph
-	var clouds;
-	var stage = new PIXI.Container();
-	var Json_Load;
-	var Json_Status;
-	var Json_VM=[];
-	var VM_ticker=0;
-	// makes the cloud bob
-	var bob_count = 0;
-	//bACKGROUND SWAP
-	var mario=false;
-	var background_cloud_check=false;
-	var background_array = [];
-	var name_array=[];
-	var background_clouds =  PIXI.Sprite.fromImage('sprites/cloud_pixel.png');
-	// create a texture from an image path
-	var cloud1 = PIXI.Texture.fromImage('sprites/cloud_pixel.png');
-	var cloud2= PIXI.Texture.fromImage('sprites/cloud_pixel_alt.png');
-	var thunder1=PIXI.Texture.fromImage('sprites/thunder_pixel_alt.png');
-	var thunder2=PIXI.Texture.fromImage('sprites/thunder_pixel.png');
-	var rain1=PIXI.Texture.fromImage('sprites/rain.png');
-	var rain2=PIXI.Texture.fromImage('sprites/rain_alt.png');
-	var Star=PIXI.Texture.fromImage('sprites/star_pixel.png');
-	var secret1=PIXI.Texture.fromImage('sprites/standing_mario.png');
-	var secret2=PIXI.Texture.fromImage('sprites/mario_running_2.png');
-	var secret3=PIXI.Texture.fromImage('sprites/mario_running_1.png');
-
-	//movie clip arrays
-	var cloud_array=[cloud1,cloud2];
-	var thunder_array=[thunder1,thunder2];
-	var rain_array=[rain2,rain1];
-	var secret_array=[secret1,secret2,secret1,secret3];
-	var current_array= cloud_array;
-	var cloud_clip= new PIXI.extras.MovieClip(current_array);
-	var secret_clip=new PIXI.extras.MovieClip(secret_array);
-	cloud_clip.animationSpeed=0.005;
-	cloud_clip.play();
-	cloud_clip.scale.x=1;
-	cloud_clip.scale.y=1;
-	cloud_clip.position.x= window.innerWidth / 2 - 1024/2;
-	secret_clip.animationSpeed=0.2;
-	secret_clip.play();
-	//Creates Font style
-	var vmInfoStyle={
-
-		fill:'#111',
-	};
-
-	//add vm info box
-	var vmInfo= new PIXI.Text("", {font: 'bold 24px monospace', fill: '#111' });
-	vmInfo.x = 10;
-	vmInfo.y = 10;
-
-	//add error message box
-	var errorBox= new PIXI.Text("",
-			{
-				font: 'bold 36px monospace',
-				fill: '#111',
-				stroke: 'white',
-				strokeThickness:  3,
-				align: 'center',
-				wordWrap: true,
-				wordWrapWidth: renderer.width * (0.9 / window.devicePixelRatio)
-			});
-	errorBox.x = renderer.width * 0.05;
-	errorBox.y = renderer.height * 0.85;
-	//errorBox.height= renderer.height * 0.2;
-	//errorBox.width = renderer.width * 0.9;
-
-	//add haze layer
-	var hazeLayer = new PIXI.Graphics();
-
-	hazeLayer.beginFill(0xBBBBBB);
-
-	hazeLayer.alpha = 0.5;
-
-	hazeLayer.drawRect(0, 0, renderer.width, renderer.height);
-
-
-
-	var timer=setInterval(Fetch_status,10000);
-	function Fetch_status(){
-		//var cloud_status=$.getJSON( "hn/pretty-stats.json", function( data ) {
-		var cloud_status=$.getJSON( "pretty-stats.json", function( data ) {
-			update_status(data.status);
-			errorBox.text = data.message;
-			Json_Load=data.load;
-			Json_Status=data.status;
-			Json_VM=data.vms;
-			//console.log(Json_VM.length)
-			//console.log(VM_ticker)
-
-		});
-	}
-
-
-	//handle clicking on background clouds
-	function onDown (eventData) {
-
-		//get vm object from cloud object
-		var vm = name_array[background_array.indexOf(eventData.target)];
-
-		//create info string
-		var info = "VM Name: " + vm.name + "\nUtilisation: "
-			+ vm.util + "%\nAllocated CPUs: "
-			+ vm.alloc_cpu + "\nAllocated Mem: "
-			+ vm.alloc_mem + "GB\n"
-			+ eventData.target.x;
-
-
-		//if the cloud has already been clicked, remove the info box
-		if (info == vmInfo.text){
-			vmInfo.text = "";
-		} else {
-			//else update
-			vmInfo.text = info;
-		}
-	}
-
-
-function update_status(status){
-	if(status=='down')
-	{
-		cloud_clip.textures=thunder_array;
-	}
-	else if(status=='degraded')
-	{
-		cloud_clip.textures=rain_array;
-	}
-	else
-	{
-		cloud_clip.textures=cloud_array;
-	}
-
-}
-
-function spawnCloud( randomX ){
-	var hour = new Date();
-	var clock = hour.getHours();
-	if ( clock >= 19 || clock < 6) {
-		renderer.backgroundColor = 0x003061;
-		// create a new Sprite that uses the image name that we just generated as its source
-		var background_clouds =  PIXI.Sprite.fromImage('sprites/star_pixel.png');
-	}
-	else
-	{
-		renderer.backgroundColor= 0x1099bb
-		var background_clouds =  PIXI.Sprite.fromImage('sprites/cloud_pixel.png');
-	}
-	background_clouds.interactive = true;
-	background_clouds.buttonMode= true;
-	background_clouds.on('mousedown', onDown);
-	background_clouds.on('touchstart', onDown);
-	// set the anchor point so the texture is centerd on the sprite
-	background_clouds.anchor.set(0.5);
-
-	// sets the cloud's size relitive to their load
-	background_clouds.scale.set(math.sqrt(math.sqrt(Json_VM[VM_ticker].alloc_mem *Json_VM[VM_ticker].alloc_cpu))*0.10);
-	//background_clouds.scale.set(math.sqrt(math.sqrt(32 *8))*0.10);
-
-
-
-
-	if (randomX){
-		background_clouds.position.x = Math.random() * renderer.width;
-	} else {
-		background_clouds.position.x = background_clouds.width / -2 ;
-	}
-
-	background_clouds.y = Math.random() * renderer.height;
-
-	//greyscale setting
-	var util = Json_VM[VM_ticker].util;
-	if (util > maxUtil){
-		util = maxUtil;
-	}
-	var value= (maxUtil - util) /maxUtil *0xFF | 0x15;
-	var grayscale = (value << 16) | (value << 8) | value;
-	var colour= '0x'+grayscale.toString(16);
-	background_clouds.tint = colour;
-	//background_clouds.alpha = 0.5;
-
-	//cloud traveling at 90 degrees horitzonally across the screen
-	background_clouds.direction = Math.PI/2;
-
-	// create a random speed for the clouds
-	background_clouds.speed = window.innerWidth*0.0005 + Math.random() * 0.7;
-
-	// finally we push the clouds into the background cloud array so it it can be easily accessed later
-	background_array.push(background_clouds);
-	name_array.push(Json_VM[VM_ticker]);
-	VM_ticker +=1
-
-	//adds cloud to screen
-	stage.addChildAt(background_clouds,0);
-}
-
-//spawn random(?) clouds on the screen to start with
-function spawnInitClouds(){
-	if (backgroundClouds == "true"){
-		if (!Json_Status){
-			setTimeout(spawnInitClouds,100);
-		} else {
-			for (var i = 0; i < maxClouds; i++){
-				spawnCloud(true);
-			}
-		}
-	}
-}
-
-	requestAnimationFrame(animate);
-	Fetch_status();
-	spawnInitClouds();
-
-
-	animate();
-	function animate() {
-		bob_count += 0.03;
-		cloud_clip.position.y = Math.sin((0.5) + bob_count) * 50 + window.innerHeight / 4.5;
-		//check if the user has requested no background clouds
-		if ( backgroundClouds != "false" ){
-			// iterate through the clouds and update their position
-			for (var i = 0; i < background_array.length; i++)
-			{
-				var background_clouds = background_array[i];
-				background_clouds.position.x += Math.sin(background_clouds.direction) * background_clouds.speed;
-				background_clouds.position.y += Math.cos(background_clouds.direction) * background_clouds.speed;
-				//if (background_clouds.position.x > CloudBounds.x + CloudBounds.width)
-				if (background_clouds.position.x > renderer.width + background_clouds.width / 2 )
-				{
-					background_clouds.removeChild()
-					background_array.splice(i,1);
-					name_array.splice(i,1);
-				}
-			}
-			//if (background_array.length<= Json_Load/10)
-			if (background_array.length <= maxClouds && Json_Load )
-			{
-				spawnCloud(false);
-			}
-
-			if (VM_ticker>=Json_VM.length-1)
-			{
-				VM_ticker=0;
-			}
-		}
-
-
-		stage.addChild(hazeLayer);
-		stage.addChild(vmInfo);
-		stage.addChild(cloud_clip);
-		stage.addChild(errorBox);
-		renderer.render(stage);
-		// request another animation frame...
-		requestAnimationFrame(animate);
-
-	}
-
-	</script>
-
+<body onload="preload()">
+  <img  id="main_cloud">
+  <p id="motd" ></p>
 </body>
 </html>
+<!--
+to do:
+bubble not clip through top
+finish gifs
+git gud
+-->
