@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      margin:0;
+      padding:0;
+      background-color: rgb(101,170,187);
+      height: 0;
+      user-select: none;
+      -moz-user-select: none;
+      overflow: hidden;
+      cursor: default;
+      font-family: monospace;
+    }
+    #main_cloud {
+      position: relative;
+      left: 50%;
+      top: 50%;
+      height: 47vh;
+      animation-name: bop;
+      animation-duration: 2s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+      animation-timing-function: ease-in-out;
+      pointer-events: none;
+    }
+    #bg_cloud {
+      position: fixed;
+      z-index: -1;
+      left: -20%;
+      animation-name: glide;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      transition-property: transform;
+      transition-duration: 0.7s;
+      transition-timing-function: ease-out;
+    }
+    #bg_cloud.clicked {
+      transform: translateX(15%);
+      animation-play-state: paused;
+      z-index: 1;
+    }
+    #vm_bubble {
+      position: fixed;
+      z-index: -1;
+      left: -20%;
+      opacity: 0;
+      animation-name: glide;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      transition-property: opacity;
+      transition-duration: 0.7s;
+      transition-timing-function: ease-out;
+    }
+    #vm_bubble.clicked {
+      opacity: 1;
+      animation-play-state: paused;
+      z-index: 1;
+    }
+    p#vm_info {
+      padding-left: 2vh;
+      font-size: 1.6vh;
+    }
+    #motd {
+      margin: 0px;
+      top: 5%;
+      left: 5%;
+      position: absolute;
+      font-size: 5vh;
+      font-weight: bold;
+      color: rgb(77, 77, 77);
+      text-shadow: 5px 0px 4px white,
+      0px 5px 4px white,
+      -5px 0px 4px white,
+      0px -5px 4px white;
+    }
+    @keyframes bop {
+      0% {transform: translate(-50%,80%);}
+      100% {transform: translate(-50%,20%);}
+    }
+    @keyframes glide {
+      0% {left: -20%;}
+      100% {left: 120%;}
+    }
+  </style>
+
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+  <script>
+  //user defined variables
+  var max_clouds = 10;
+  var bubbles_enabled = 1;
+  function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+    results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+  if ( getParameterByName( "max" ) ) {
+    max_clouds = getParameterByName( "max" );
+  }
+  if ( getParameterByName( "bubbles" ) ) {
+    bubbles_enabled = getParameterByName( "bubbles" );
+  }
+
+  function format_size(info){
+    out = info.alloc_cpu * info.alloc_mem;
+    out = Math.sqrt(Math.sqrt(out));
+    out = out / 5;
+    out = out * 12;
+    out = out + 6;
+    return(Math.floor(out));
+  }
+  function format_text(div, info){
+    $(div).empty();
+    p_name = document.createElement("p");
+    p_util = document.createElement("p");
+    p_cpus = document.createElement("p");
+    p_mem = document.createElement("p");
+    p_name.id = "vm_info";
+    p_util.id = "vm_info";
+    p_cpus.id = "vm_info";
+    p_mem.id = "vm_info";
+    $(p_name).text("Name: " + info.name);
+    $(p_util).text("Util: " + String(Math.round(info.util*10000)/10000) + "%");
+    $(p_cpus).text("CPUs: " + info.alloc_cpu);
+    $(p_mem).text("Mem : " + info.alloc_mem + "GB");
+    $(div).append(p_name);
+    $(div).append(p_util);
+    $(div).append(p_cpus);
+    $(div).append(p_mem );
+
+  }
+
+  var status;
+  var load;
+  var vms_array = [];
+  setInterval(update_json,10000);
+  function update_json(){
+    $.getJSON("pretty-stats.json",function(data){
+      if(status !== data.status){
+        status = data.status;
+        if(data.status == "ok"){
+          $("#main_cloud").attr("src", "sprites/new/main.gif");
+        }
+        else if (data.status == "degraded") {
+          $("#main_cloud").attr("src", "sprites/new/degraded1.png");
+        }
+        else{
+          $("#main_cloud").attr("src", "sprites/new/down1.png");
+        }
+      }
+      load = data.load;
+      $("#motd").text(data.message);
+      vms_array = data.vms;
+    });
+  }
+
+  var bg_array = [];
+  function preload(){
+    update_json();
+    if(!status){
+      setTimeout(preload,100)
+    }
+    else{
+      for (i = 0; i < max_clouds; i++){
+        var data_dict = {};
+        var vm_info = vms_array[Math.floor(Math.random() * vms_array.length)];
+        var img = document.createElement("img");
+
+        data_dict.vm_info = vm_info;
+        data_dict.img = img;
+
+        img.id = "bg_cloud";
+        img.src = "sprites/new/bg_cloud.png";
+
+        var top = Math.floor(Math.random() * 88);
+        var cloud_top = String(top) + "%";
+        var duration = String((Math.random()*15)+10) + "s";
+        var delay = String(-(Math.random()*20)) + "s";
+        var size = format_size(vm_info);
+
+        img.style.top = cloud_top;
+        img.style.animationDuration = duration;
+        img.style.animationDelay = delay;
+        img.style.height = String(size) + "vh";
+        img.style.filter = "brightness(" + String(1 - (vm_info.util / 270)) + ")";
+
+        img.addEventListener("animationiteration", function(){
+          for(i = 0; i < bg_array.length; i++){
+            if(bg_array[i].img == this){
+              var new_top = Math.floor(Math.random() * 88);
+              var new_cloud_top = String(new_top) + "%";
+              var new_bubbl_top = String(new_top - 20.5) + "%";
+
+              bg_array[i].vm_info = vms_array[Math.floor(Math.random() * vms_array.length)];
+              var new_size = format_size(bg_array[i].vm_info);
+
+              bg_array[i].img.style.top = new_cloud_top;
+              bg_array[i].img.style.height = String(new_size) + "vh";
+              bg_array[i].img.style.filter = "brightness(" + String(1 - (bg_array[i].vm_info.util / 270)) + ")";
+              if(parseInt(bubbles_enabled)){
+                bg_array[i].bbl.style.top = new_bubbl_top;
+                bg_array[i].txt.style.top = new_bubbl_top;
+                format_text(bg_array[i].txt, bg_array[i].vm_info);
+              }
+            }
+          }
+        }, false);
+
+
+
+        if(parseInt(bubbles_enabled)){
+          var bbl = document.createElement("img");
+          var txt = document.createElement("div");
+
+          data_dict.bbl = bbl;
+          data_dict.txt = txt;
+
+          bbl.id = "vm_bubble";
+          txt.id = "vm_bubble";
+          bbl.src = "sprites/new/vm_bubble.png";
+          //$(txt).text(format_text(vm_info));
+          format_text(txt, vm_info);
+
+          var bubbl_top = String(top - 20.5) + "%";
+
+          bbl.style.top = bubbl_top;
+          txt.style.top = bubbl_top;
+          bbl.style.height = "20vh";
+          bbl.style.animationDuration = duration;
+          txt.style.animationDuration = duration;
+          bbl.style.animationDelay = delay;
+          txt.style.animationDelay = delay;
+
+          img.onclick = function(){
+            for(i = 0; i < bg_array.length; i++){
+              if(bg_array[i].img == this){
+                $(bg_array[i].img).toggleClass("clicked");
+                if(parseInt(bubbles_enabled)){
+                  $(bg_array[i].bbl).toggleClass("clicked");
+                  $(bg_array[i].txt).toggleClass("clicked");
+                }
+              }
+            }
+          }
+          
+          $("body").append(bbl);
+          $("body").append(txt);
+        }
+        $("body").append(img);
+        bg_array.push(data_dict);
+      }
+    }
+  }
+  </script>
+</head>
+
+<body onload="preload()">
+  <img  id="main_cloud">
+  <p id="motd" ></p>
+</body>
+</html>
+<!--
+to do:
+filter:brightness(utilisation);
+git gud
+-->
