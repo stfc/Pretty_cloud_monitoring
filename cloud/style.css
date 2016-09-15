@@ -9,6 +9,9 @@ body {
   cursor: default;
   font-family: monospace;
 }
+p {
+  margin:inherit;
+}
 #main_cloud {
   position: relative;
   left: 50%;
@@ -42,6 +45,7 @@ body {
   z-index: -1;
   left: -20%;
   opacity: 0;
+  line-height: 3.5vh;
   animation-name: glide;
   animation-iteration-count: infinite;
   animation-timing-function: linear;
@@ -59,21 +63,23 @@ p#vm_info {
   font-size: 1.6vh;
 }
 #motd {
-  margin: 0px;
-  top: 5%;
-  left: 5%;
+  margin: 0.7vh;
+  top: 0;
+  left: 0;
   position: absolute;
-  font-size: 5vh;
+  font-size: 3vw;
   font-weight: bold;
   color: rgb(77, 77, 77);
+  white-space: nowrap;
+  pointer-events: none;
   text-shadow: 5px 0px 4px white,
   0px 5px 4px white,
   -5px 0px 4px white,
   0px -5px 4px white;
 }
 @keyframes bop {
-  0% {transform: translate(-50%,0%);}
-  100% {transform: translate(-50%,65%);}
+  0% {transform: translate(-50%,7.5%);}
+  100% {transform: translate(-50%,57.5%);}
 }
 @keyframes glide {
   0% {left: -20%;}
