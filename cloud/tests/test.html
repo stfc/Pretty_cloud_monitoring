@@ -1,0 +1,54 @@
+<style>
+  body {
+    margin:0;
+    padding:0;
+  }
+</style>
+<meta charset="utf-8">
+<body>
+<script src="js/pixi.js"></script>
+<script>
+
+//Create the renderer
+var stage = new PIXI.Container();
+var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight,{backgroundColor : 0x1099bb});
+
+document.body.appendChild(renderer.view);
+
+PIXI.loader
+  .add("sprites/coin.png")
+  .load(setup);
+
+var coin;
+var vmInfo;
+var radius = 1;
+var angle = 0;
+var deg2rad = Math.PI / 180;
+
+function setup(){
+  vmInfo = new PIXI.Text("", {font: 'bold 24px monospace', fill: '#111' });
+  vmInfo.x = 10;
+  vmInfo.y = 10;
+  coin = new PIXI.Sprite(
+    PIXI.loader.resources["sprites/coin.png"].texture
+  );
+  //coin.x = (renderer.width / 2) - (coin.width / 2);
+  coin.x = window.innerWidth / 3;
+  coin.y = window.innerHeight / 3;
+  stage.addChild(coin);
+  stage.addChild(vmInfo);
+  renderer.render(stage);
+  animate();
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  coin.x += Math.sin(angle) * window.innerWidth / 150;
+  coin.y += Math.cos(angle) * window.innerHeight / 150;
+  angle += 0.05;
+  vmInfo.text = coin.x;
+  renderer.render(stage);
+}
+
+</script>
+</body>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      margin:0;
+      padding:0;
+      background-color: rgb(101,170,187);
+      height: 0;
+      user-select: none;
+      -moz-user-select: none;
+      overflow: hidden;
+      cursor: default;
+    }
+    #main_cloud {
+      position: relative;
+      left: 50%;
+      top: 50%;
+      height: 47vh;
+      animation-name: bop;
+      animation-duration: 2s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+      animation-timing-function: ease-in-out;
+      pointer-events: none;
+    }
+    #bg_cloud {
+      position: fixed;
+      height: 6vh;
+      z-index: -1;
+      left: -20%;
+      animation-name: glide;
+      animation-iteration-count: infinite;
+      animation-fill-mode: forwards;
+      animation-timing-function: linear;
+      transition-duration: 0.7s;
+      transition-property: transform;
+      transition-timing-function: ease-out;
+    }
+    #bg_cloud.clicked {
+      transform: translateX(15%);
+      animation-play-state: paused;
+      z-index: 1;
+    }
+    #motd {
+      margin: 0px;
+      top: 5%;
+      left: 5%;
+      position: absolute;
+      font-size: 5vh;
+      font-family: monospace;
+      font-weight: bold;
+      color: rgb(77, 77, 77);
+      text-shadow: 5px 0px 4px white,
+      0px 5px 4px white,
+      -5px 0px 4px white,
+      0px -5px 4px white;
+    }
+    @keyframes bop {
+      0% {transform: translate(-50%,80%);}
+      100% {transform: translate(-50%,20%);}
+    }
+    @keyframes glide {
+      0% {left: -20%;}
+      100% {left: 120%;}
+    }
+  </style>
+
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+  <script>
+  //user defined variables
+  var max_clouds = 10;
+  var performance_mode = 2;
+  function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+    results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+  if ( getParameterByName( "max" ) ) {
+    max_clouds = getParameterByName( "max" );
+  }
+  if ( getParameterByName( "perf" ) ) {
+    performance_mode = getParameterByName( "perf" );
+  }
+
+  var status;
+  var load;
+  var vms_array = [];
+  setInterval(update_json,10000);
+  function update_json(){
+    $.getJSON("pretty-stats.json",function(data){
+      if(status !== data.status){
+        status = data.status;
+        if(data.status == "ok"){
+          $("#main_cloud").attr("src", "sprites/new/main.gif");
+        }
+        else if (data.status == "degraded") {
+          $("#main_cloud").attr("src", "sprites/new/degraded1.png");
+        }
+        else{
+          $("#main_cloud").attr("src", "sprites/new/down1.png");
+        }
+      }
+      load = data.load;
+      $("#motd").text(data.message);
+      vms_array = data.vms;
+    });
+  }
+
+  var bg_array = [];
+  function preload(){
+    update_json();
+    if(!status){
+      setTimeout(preload,100)
+    }
+    else{
+      for (i = 0; i < max_clouds; i++){
+        var data_array = []
+        var img = document.createElement("img");
+
+        data_array.push(img);
+        bg_array.push(data_array);
+
+        img.src = "sprites/new/bg_cloud.png";
+        img.id = "bg_cloud";
+
+        var top = Math.floor(Math.random() * 88);
+        var cloud_top = String(top) + "%";
+        var bubbl_top = String(top - 9) + "%";
+        var duration = String((Math.random()*15)+10) + "s";
+        var delay = String(-(Math.random()*20)) + "s";
+
+        img.style["top"] = cloud_top;
+        img.style["animationDuration"] = duration;
+        img.style["animationDelay"] = delay;
+        //img.style["filter"] = "brightness(" + String(1 - (vm_info))
+
+        img.onclick = function(){
+          for(i = 0; i < bg_array.length; i++){
+            if(bg_array[i][0] == this){
+              $(bg_array[i][0]).toggleClass("clicked");
+              $(bg_array[i][2]).toggleClass("clicked");
+              $(bg_array[i][3]).toggleClass("clicked");
+              $(bg_array[i][4]).toggleClass("clicked");
+            }
+          }
+        }
+
+        img.addEventListener("animationiteration", function(){
+          var new_top = Math.floor(Math.random() * 88);
+          var new_cloud_top = String(new_top) + "%";
+          var new_bubbl_top = String(new_top - 9) + "%";
+          //var new_speed = String((Math.random()*15)+10) + "s";
+          for(i = 0; i < bg_array.length; i++){
+            if(bg_array[i][0] == this){
+              bg_array[i][1] = vms_array[Math.floor(Math.random() * vms_array.length)];
+              bg_array[i][0].style["top"] = new_cloud_top;
+              bg_array[i][2].style["top"] = new_cloud_top;
+              bg_array[i][3].style["top"] = new_bubbl_top;
+              bg_array[i][0].style["opacity"] = 1 - (bg_array[i][4].util / 270);
+              // bg_array[i][0].style["animationDuration"] = new_speed;
+              // bg_array[i][1].style["animationDuration"] = new_speed;
+            }
+          }
+        }, false);
+
+        if(performance_mode > 0){
+          var sil = document.createElement("img");
+          var vm_info = vms_array[Math.floor(Math.random() * vms_array.length)];
+
+          data_array.push(vm_info);
+          data_array.push(sil);
+
+          sil.src = "sprites/new/bg_cloud_sil.png";
+          sil.id = "bg_cloud";
+
+          sil.style["top"] = cloud_top;
+          sil.style["animationDuration"] = duration;
+          sil.style["animationDelay"] = delay;
+          img.style["opacity"] = 1 - (vm_info.util / 270);
+
+          if(performance_mode > 1){
+            var vm_bble = document.createElement("img");
+            var vm_text = document.createElement("p");
+
+            data_array.push(vm_bble);
+            data_array.push(vm_text);
+
+            vm_bble.src = "sprites/new/vm_bubble.png"
+            vm_bble.id = "bg_cloud";
+            vm_text.id = "bg_cloud";
+            vm_text.text = "Line1\nLine2\nLine3\nLine4";
+
+            vm_bble.style["top"] = bubbl_top;
+            vm_bble.style["animationDuration"] = duration;
+            vm_bble.style["animationDelay"] = delay;
+            vm_bble.style["height"] = "9vh"
+
+            $("body").append(vm_bble);
+            $("body").append(vm_text);
+          }
+          $("body").append(sil);
+        }
+        $("body").append(img);
+      }
+    }
+  }
+  </script>
+</head>
+
+<body onload="preload()">
+  <img  id="main_cloud">
+  <p id="motd" ></p>
+</body>
+</html>
+<!--
+to do:
+filter:brightness(utilisation);
+git gud
+-->
